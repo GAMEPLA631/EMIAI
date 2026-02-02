@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMI AI Chat - Hlasové správy a Čítanie</title>
+    <title>EMI AI Chat - Pamäť a Vyhľadávanie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -20,22 +20,6 @@
             background: rgba(17, 17, 20, 0.8);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .thinking-shimmer {
-            background: linear-gradient(90deg, #1e1e24 0%, #2a2a35 50%, #1e1e24 100%);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite linear;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #6366f1, #a855f7);
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -76,14 +60,14 @@
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-white leading-none">EMI AI</h1>
-                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Hlasové správy a Čítanie</span>
+                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Pamäť & Vyhľadávanie</span>
             </div>
         </div>
 
         <div class="flex items-center gap-4">
             <div class="hidden sm:flex flex-col items-end">
                 <span class="text-[10px] text-green-500 uppercase font-bold tracking-tighter">Status</span>
-                <span class="text-xs font-mono text-white">IndexedDB Online</span>
+                <span class="text-xs font-mono text-white">Google Search Active</span>
             </div>
             <button onclick="toggleSettings()" class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-slate-300">
                 <i data-lucide="settings" class="w-5 h-5"></i>
@@ -96,23 +80,23 @@
         <!-- Welcome UI -->
         <div id="welcome-ui" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-12">
             <div class="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
-                <i data-lucide="mic-vocal" class="text-indigo-500 w-12 h-12"></i>
+                <i data-lucide="brain-circuit" class="text-indigo-500 w-12 h-12"></i>
             </div>
-            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">Hlasová EMI</h2>
+            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI s pamäťou</h2>
             <p class="text-slate-400 text-lg leading-relaxed mb-10">
-                Kliknite na mikrofón, povedzte svoju správu a ja vám odpoviem. Moje odpovede vám prehliadač automaticky prečíta nahlas.
+                Pamätám si našu históriu, viem vyhľadávať na Google a YouTube a moje odpovede sú vždy aktuálne.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <button onclick="quickStart('Napíš mi krátky vtipný príbeh o robotovi, ktorý sa naučil spievať.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
+                <button onclick="quickStart('Nájdi mi najnovšie videá o vesmírnom programe Artemis na YouTube.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
-                        <i data-lucide="sparkles" class="text-indigo-400 w-5 h-5"></i>
-                        <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">Skúsiť Príbeh</span>
+                        <i data-lucide="youtube" class="text-red-400 w-5 h-5"></i>
+                        <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">Hľadať na YouTube</span>
                     </div>
                 </button>
-                <button onclick="startVoiceRecording()" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
+                <button onclick="quickStart('Kto vyhral posledné majstrovstvá sveta vo futbale? Vyhľadaj to.')" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
-                        <i data-lucide="mic" class="text-red-400 w-5 h-5"></i>
-                        <span class="font-bold text-white group-hover:text-red-300 transition-colors">Rozprávať teraz</span>
+                        <i data-lucide="search" class="text-indigo-400 w-5 h-5"></i>
+                        <span class="font-bold text-white group-hover:text-red-300 transition-colors">Hľadať na Google</span>
                     </div>
                 </button>
             </div>
@@ -131,7 +115,7 @@
                     <textarea 
                         id="user-input" 
                         rows="1" 
-                        placeholder="Napíšte správu alebo použite mikrofón..."
+                        placeholder="Opýtajte sa EMI na čokoľvek..."
                         class="flex-1 bg-transparent border-none focus:ring-0 text-slate-200 py-3.5 px-2 resize-none max-h-48 outline-none text-base custom-scrollbar"
                     ></textarea>
                     
@@ -147,10 +131,10 @@
                                 <input type="checkbox" id="tts-switch" class="sr-only peer" checked>
                                 <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                             </div>
-                            <span class="text-[11px] font-bold text-slate-500 group-has-[:checked]:text-indigo-400 uppercase tracking-widest">Čítať odpovede nahlas</span>
+                            <span class="text-[11px] font-bold text-slate-500 group-has-[:checked]:text-indigo-400 uppercase tracking-widest">Hlasový výstup</span>
                         </label>
                     </div>
-                    <span class="text-[10px] text-slate-600 font-medium">Hlasové ovládanie aktívne • IndexedDB</span>
+                    <button type="button" onclick="clearConversation()" class="text-[10px] text-red-500/70 hover:text-red-500 uppercase font-bold tracking-tighter">Vymazať pamäť</button>
                 </div>
             </form>
         </div>
@@ -173,23 +157,27 @@
                 <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-indigo-600/30">
                     Uložiť nastavenia
                 </button>
-                <button onclick="resetDB()" class="w-full text-xs text-red-500/60 hover:text-red-500 transition-colors">Zmazať všetko</button>
+                <button onclick="resetAllData()" class="w-full text-xs text-red-500/60 hover:text-red-500 transition-colors">Tvrdý reset databázy</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Database & Config ---
-        const DB_NAME = 'EMI_VOICE_DB';
-        const STORE_NAME = 'settings';
+        // --- Database Management ---
+        const DB_NAME = 'EMI_ADVANCED_DB';
+        const STORE_SETTINGS = 'settings';
+        const STORE_HISTORY = 'history';
         let db;
         let appConfig = { key: '' };
+        let chatHistory = [];
 
         function initDB() {
             return new Promise((resolve) => {
-                const request = indexedDB.open(DB_NAME, 1);
+                const request = indexedDB.open(DB_NAME, 2);
                 request.onupgradeneeded = (e) => {
-                    e.target.result.createObjectStore(STORE_NAME);
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(STORE_SETTINGS)) database.createObjectStore(STORE_SETTINGS);
+                    if (!database.objectStoreNames.contains(STORE_HISTORY)) database.createObjectStore(STORE_HISTORY);
                 };
                 request.onsuccess = (e) => {
                     db = e.target.result;
@@ -198,31 +186,41 @@
             });
         }
 
-        async function getSetting(k) {
+        async function getFromDB(store, key) {
             return new Promise(r => {
-                const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).get(k);
+                const req = db.transaction(store).objectStore(store).get(key);
                 req.onsuccess = () => r(req.result);
             });
         }
 
-        async function setSetting(k, v) {
+        async function saveToDB(store, key, val) {
             return new Promise(r => {
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).put(v, k);
+                const tx = db.transaction(store, 'readwrite');
+                tx.objectStore(store).put(val, key);
                 tx.oncomplete = () => r();
             });
         }
 
         async function bootstrap() {
             await initDB();
-            appConfig.key = await getSetting('api_key') || '';
+            appConfig.key = await getFromDB(STORE_SETTINGS, 'api_key') || '';
+            chatHistory = await getFromDB(STORE_HISTORY, 'chat_log') || [];
+            
             document.getElementById('api-field').value = appConfig.key;
             lucide.createIcons();
+            
+            // Re-render history if it exists
+            if (chatHistory.length > 0) {
+                welcome.classList.add('hidden');
+                chatHistory.forEach(msg => {
+                    renderMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, msg.sources || []);
+                });
+            }
         }
 
         bootstrap();
 
-        // --- UI & Voice Controls ---
+        // --- UI Logic ---
         const wrapper = document.getElementById('chat-wrapper');
         const welcome = document.getElementById('welcome-ui');
         const mainForm = document.getElementById('main-form');
@@ -236,69 +234,62 @@
         function toggleSettings() { document.getElementById('settings-overlay').classList.toggle('hidden'); }
         async function saveConfig() {
             appConfig.key = document.getElementById('api-field').value.trim();
-            await setSetting('api_key', appConfig.key);
+            await saveToDB(STORE_SETTINGS, 'api_key', appConfig.key);
             toggleSettings();
         }
 
-        function resetDB() { if(confirm("Naozaj?")) { indexedDB.deleteDatabase(DB_NAME); location.reload(); } }
+        async function clearConversation() {
+            if (confirm("Naozaj chcete vymazať celú históriu konverzácie?")) {
+                chatHistory = [];
+                await saveToDB(STORE_HISTORY, 'chat_log', []);
+                location.reload();
+            }
+        }
 
-        // --- Text-to-Speech (Čítanie nahlas) ---
+        function resetAllData() { if(confirm("Toto vymaže kľúč aj históriu. Pokračovať?")) { indexedDB.deleteDatabase(DB_NAME); location.reload(); } }
+
+        // --- TTS & STT ---
         function speakText(text) {
             if (!ttsSwitch.checked) return;
-            // Zrušiť predchádzajúce čítanie
             window.speechSynthesis.cancel();
             
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'sk-SK'; // Nastavenie slovenčiny
-            utterance.rate = 1.0;
-            utterance.pitch = 1.1;
+            // Cleanup: Odstránenie markdown znakov pre čítanie
+            const cleanText = text.replace(/\*\*/g, '').replace(/__/g, '').replace(/###/g, '');
             
-            // Pokus nájsť slovenský hlas v systéme
-            const voices = window.speechSynthesis.getVoices();
-            const skVoice = voices.find(v => v.lang.startsWith('sk'));
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'sk-SK';
+            const skVoice = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('sk'));
             if (skVoice) utterance.voice = skVoice;
-
             window.speechSynthesis.speak(utterance);
         }
 
-        // --- Speech-to-Text (Nahrávanie mikrofónom) ---
-        function initSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Rozpoznávanie reči nie je vo vašom prehliadači podporované.");
-                return null;
-            }
-            const rec = new SpeechRecognition();
+        function initRecognition() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) return null;
+            const rec = new SR();
             rec.lang = 'sk-SK';
-            rec.continuous = false;
-            rec.interimResults = true;
-
             rec.onresult = (e) => {
-                const transcript = Array.from(e.results)
-                    .map(r => r[0].transcript)
-                    .join('');
-                userIn.value = transcript;
-                userIn.style.height = userIn.scrollHeight + 'px';
+                const t = Array.from(e.results).map(r => r[0].transcript).join('');
+                userIn.value = t;
             };
-
             rec.onend = () => {
                 if (isRecording) {
                     stopVoiceRecording();
-                    runChat(); // Automaticky odošle po skončení reči
+                    runChat();
                 }
             };
-
-            rec.onerror = () => stopVoiceRecording();
             return rec;
         }
 
-        function startVoiceRecording() {
-            if (!recognition) recognition = initSpeechRecognition();
-            if (!recognition) return;
-            
-            isRecording = true;
-            micIcon.classList.add('mic-active');
-            recognition.start();
+        function toggleVoiceRecording() {
+            if (isRecording) stopVoiceRecording();
+            else {
+                if (!recognition) recognition = initRecognition();
+                if (!recognition) return alert("Hlasové ovládanie nie je podporované.");
+                isRecording = true;
+                micIcon.classList.add('mic-active');
+                recognition.start();
+            }
         }
 
         function stopVoiceRecording() {
@@ -307,22 +298,27 @@
             if (recognition) recognition.stop();
         }
 
-        function toggleVoiceRecording() {
-            if (isRecording) stopVoiceRecording();
-            else startVoiceRecording();
-        }
-
         // --- Chat Interaction ---
-        function addMessage(role, text, sources = []) {
+        function renderMessage(role, text, sources = []) {
             welcome.classList.add('hidden');
             const row = document.createElement('div');
             row.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-anim mb-4`;
             
-            const isAI = role === 'ai';
+            let sourceHtml = '';
+            if (sources.length > 0) {
+                sourceHtml = `<div class="mt-4 flex flex-wrap gap-2 pt-3 border-t border-white/5">
+                    ${sources.map(s => `
+                        <a href="${s.uri}" target="_blank" class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1.5">
+                            <i data-lucide="external-link" class="w-3 h-3"></i> ${s.title || 'Zdroj / Video'}
+                        </a>
+                    `).join('')}
+                </div>`;
+            }
+
             row.innerHTML = `
-                <div class="flex gap-4 max-w-[85%] md:max-w-[70%] ${role === 'user' ? 'flex-row-reverse' : ''}">
-                    <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${isAI ? 'bg-[#1a1a20] border border-white/10' : 'bg-indigo-600 shadow-lg'}">
-                        <i data-lucide="${isAI ? 'bot' : 'user'}" class="w-5 h-5 text-white ${isAI ? 'text-indigo-400' : ''}"></i>
+                <div class="flex gap-4 max-w-[85%] md:max-w-[75%] ${role === 'user' ? 'flex-row-reverse' : ''}">
+                    <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${role === 'ai' ? 'bg-[#1a1a20] border border-white/10' : 'bg-indigo-600 shadow-lg'}">
+                        <i data-lucide="${role === 'ai' ? 'bot' : 'user'}" class="w-5 h-5 text-white ${role === 'ai' ? 'text-indigo-400' : ''}"></i>
                     </div>
                     <div class="space-y-1">
                         <div class="p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-md ${
@@ -330,34 +326,40 @@
                         }">
                             ${text}
                         </div>
+                        ${sourceHtml}
                     </div>
                 </div>
             `;
             wrapper.appendChild(row);
             lucide.createIcons();
             wrapper.scrollTop = wrapper.scrollHeight;
-            
-            if (isAI) speakText(text); // Prečítať AI odpoveď
         }
 
         async function runChat() {
             const val = userIn.value.trim();
             if (!val || !appConfig.key) { if(!appConfig.key) toggleSettings(); return; }
 
-            addMessage('user', val);
+            // Add to history and UI
+            chatHistory.push({ role: 'user', content: val });
+            renderMessage('user', val);
             userIn.value = '';
             userIn.style.height = 'auto';
 
-            // Simulácia uvažovania
             const thinking = addThinkingIndicator();
             
             try {
-                const res = await callGemini(val);
+                const res = await callGemini();
                 thinking.remove();
-                addMessage('ai', res.text);
+                
+                // Save AI response
+                chatHistory.push({ role: 'model', content: res.text, sources: res.sources });
+                await saveToDB(STORE_HISTORY, 'chat_log', chatHistory);
+                
+                renderMessage('ai', res.text, res.sources);
+                speakText(res.text);
             } catch (e) {
                 thinking.remove();
-                addMessage('ai', "Prepáčte, nastala chyba. Skontrolujte prosím váš API kľúč.");
+                renderMessage('ai', "Nastala chyba pri hľadaní odpovede. Skontrolujte prosím váš kľúč.");
             }
         }
 
@@ -367,10 +369,10 @@
             row.innerHTML = `
                 <div class="flex gap-4">
                     <div class="w-9 h-9 rounded-xl bg-[#1a1a20] flex items-center justify-center border border-white/5">
-                        <i data-lucide="brain" class="w-5 h-5 text-indigo-400"></i>
+                        <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
                     </div>
                     <div class="bg-[#1a1a20] border border-white/5 p-4 rounded-2xl text-xs text-slate-400">
-                        EMI uvažuje a pripravuje hlasovú odpoveď...
+                        EMI prehľadáva Google a YouTube...
                     </div>
                 </div>
             `;
@@ -380,22 +382,41 @@
             return row;
         }
 
-        async function callGemini(p) {
-            const system = "Si EMI, inteligentná asistentka. Odpovedaj v slovenčine, buď milá a nápomocná. Ak ti užívateľ niečo povie hlasom, tvoja odpoveď bude prečítaná nahlas.";
+        async function callGemini() {
+            // Konverzia histórie pre API formát (iba textové časti)
+            const contents = chatHistory.map(item => ({
+                role: item.role,
+                parts: [{ text: item.content }]
+            }));
+
+            const system = `Si EMI, vysoko pokročilá AI asistentka. 
+            Máš prístup k vyhľadávaniu Google a YouTube. 
+            Vždy uvádzaj pravdivé fakty a ak nájdeš videá alebo zdroje, pridaj ich. 
+            Tvoja odpoveď bude prečítaná nahlas, tak sa vyhýbaj nadmernému používaniu symbolov. 
+            Odpovedaj v slovenčine.`;
+
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${appConfig.key}`;
 
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: p }] }],
-                    systemInstruction: { parts: [{ text: system }] }
+                    contents: contents,
+                    systemInstruction: { parts: [{ text: system }] },
+                    tools: [{ "google_search": {} }]
                 })
             });
 
             if (!response.ok) throw new Error();
             const data = await response.json();
-            return { text: data.candidates[0].content.parts[0].text };
+            
+            const text = data.candidates[0].content.parts[0].text;
+            const sources = data.candidates[0].groundingMetadata?.groundingAttributions?.map(a => ({
+                uri: a.web?.uri,
+                title: a.web?.title
+            })) || [];
+
+            return { text, sources };
         }
 
         mainForm.onsubmit = (e) => { e.preventDefault(); runChat(); };
@@ -406,7 +427,6 @@
             this.style.height = this.scrollHeight + 'px';
         });
 
-        // Načítanie hlasov (niektoré prehliadače ich načítavajú asynchrónne)
         window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     </script>
 </body>
