@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMI AI Chat - Pokročilý Model</title>
+    <title>EMI AI Chat - Pokročilý Model (IndexedDB Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -48,11 +48,10 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .pulse-red { animation: pulseRed 2s infinite; }
-        @keyframes pulseRed {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        .user-bubble {
+            background: #312e81; 
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
@@ -66,16 +65,14 @@
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-white leading-none">EMI AI</h1>
-                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Pokročilý Systém</span>
+                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Neobmedzený Pokročilý Systém</span>
             </div>
         </div>
 
         <div class="flex items-center gap-4">
             <div class="hidden sm:flex flex-col items-end">
-                <span id="limit-label" class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Denné Správy</span>
-                <div class="flex items-center gap-2">
-                    <span id="limit-counter" class="text-xs font-mono text-white">0 / 20</span>
-                </div>
+                <span class="text-[10px] text-green-500 uppercase font-bold tracking-tighter">Status</span>
+                <span class="text-xs font-mono text-white">IndexedDB Online</span>
             </div>
             <button onclick="toggleSettings()" class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-slate-300">
                 <i data-lucide="settings" class="w-5 h-5"></i>
@@ -88,26 +85,24 @@
         <!-- Welcome UI -->
         <div id="welcome-ui" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-12">
             <div class="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
-                <i data-lucide="brain-circuit" class="text-indigo-500 w-12 h-12"></i>
+                <i data-lucide="database" class="text-indigo-500 w-12 h-12"></i>
             </div>
-            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI k vašim službám</h2>
+            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI bez limitov</h2>
             <p class="text-slate-400 text-lg leading-relaxed mb-10">
-                Pokročilý model s hlbokým uvažovaním. Viem generovať dychberúce príbehy, vyhľadávať fakty a rozprávať sa s vami naživo.
+                Teraz využívam IndexedDB pre neobmedzené ukladanie a nemám žiadne limity na správy. Rozprávaj sa so mnou koľko len chceš.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <button onclick="quickStart('Napíš mi dlhý a napínavý príbeh o umelej inteligencii v roku 2100.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
+                <button onclick="quickStart('Napíš mi epický príbeh o umelej inteligencii, ktorá ovládla vesmír.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
                         <i data-lucide="sparkles" class="text-indigo-400 w-5 h-5"></i>
                         <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">Generovať Príbeh</span>
                     </div>
-                    <p class="text-xs text-slate-500">EMI vytvorí originálny text na základe vašich požiadaviek.</p>
                 </button>
                 <button onclick="openLiveMode()" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
                         <i data-lucide="mic" class="text-red-400 w-5 h-5"></i>
                         <span class="font-bold text-white group-hover:text-red-300 transition-colors">Live Rozhovor</span>
                     </div>
-                    <p class="text-xs text-slate-500">Rozprávajte sa s EMI bez písania, hlasom v reálnom čase.</p>
                 </button>
             </div>
         </div>
@@ -117,8 +112,6 @@
     <footer class="p-4 md:p-6 bg-[#0a0a0c]">
         <div class="max-w-4xl mx-auto">
             <form id="main-form" class="relative">
-                <div class="absolute -inset-1.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-[2rem] blur-xl opacity-0 transition duration-500 group-focus-within:opacity-100"></div>
-                
                 <div class="relative bg-[#16161a] border border-white/10 rounded-[1.5rem] flex items-end p-2 gap-2 shadow-2xl">
                     <button type="button" onclick="toggleVoice()" id="mic-trigger" class="p-3.5 text-slate-500 hover:text-red-400 transition-colors rounded-xl hover:bg-white/5">
                         <i data-lucide="mic" class="w-6 h-6"></i>
@@ -131,7 +124,7 @@
                         class="flex-1 bg-transparent border-none focus:ring-0 text-slate-200 py-3.5 px-2 resize-none max-h-48 outline-none text-base custom-scrollbar"
                     ></textarea>
                     
-                    <button type="submit" id="send-trigger" class="p-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-30">
+                    <button type="submit" id="send-trigger" class="p-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
                         <i data-lucide="send" class="w-6 h-6"></i>
                     </button>
                 </div>
@@ -146,18 +139,18 @@
                             <span class="text-[11px] font-bold text-slate-500 group-has-[:checked]:text-indigo-400 uppercase tracking-widest">Hlboké uvažovanie</span>
                         </label>
                     </div>
-                    <span class="text-[10px] text-slate-600 font-medium">Model EMI 2.5 Flash • Google Grounding Aktívny</span>
+                    <span class="text-[10px] text-slate-600 font-medium">Model EMI 2.5 • IndexedDB Neobmedzené Úložisko</span>
                 </div>
             </form>
         </div>
     </footer>
 
-    <!-- Settings -->
+    <!-- Settings Overlay -->
     <div id="settings-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
         <div class="bg-[#111114] border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
             <div class="px-8 py-6 border-b border-white/5 flex items-center justify-between">
                 <h3 class="text-xl font-bold text-white flex items-center gap-3">
-                    <i data-lucide="sliders" class="text-indigo-400"></i> Nastavenia EMI
+                    <i data-lucide="database" class="text-indigo-400"></i> Databáza EMI
                 </h3>
                 <button onclick="toggleSettings()" class="text-slate-500 hover:text-white"><i data-lucide="x"></i></button>
             </div>
@@ -166,14 +159,15 @@
                     <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Google Gemini API Key</label>
                     <input type="password" id="api-field" placeholder="Vložte kľúč..." class="w-full bg-[#0a0a0c] border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all">
                 </div>
-                <div class="space-y-3">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Denný Limit Správ</label>
-                    <input type="number" id="limit-field" value="20" class="w-full bg-[#0a0a0c] border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none">
+                <div class="bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">
+                    <p class="text-[11px] text-indigo-300 leading-relaxed italic">
+                        V tejto verzii sú limity správ odstránené. Vaše dáta sú uložené v IndexedDB vašej inštancie prehliadača bez obmedzení kapacity localStorage.
+                    </p>
                 </div>
                 <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-indigo-600/30">
-                    Uložiť zmeny
+                    Uložiť do IndexedDB
                 </button>
-                <button onclick="resetData()" class="w-full text-xs text-red-500/60 hover:text-red-500 transition-colors">Vymazať celú históriu</button>
+                <button onclick="resetDB()" class="w-full text-xs text-red-500/60 hover:text-red-500 transition-colors">Zmazať databázu (Hard Reset)</button>
             </div>
         </div>
     </div>
@@ -194,64 +188,93 @@
     </div>
 
     <script>
-        // --- System State ---
-        let appConfig = {
-            key: localStorage.getItem('emi_key') || '',
-            limit: parseInt(localStorage.getItem('emi_limit') || '20'),
-            used: parseInt(localStorage.getItem('emi_used') || '0'),
-            day: localStorage.getItem('emi_day') || new Date().toDateString()
-        };
+        // --- IndexedDB Management ---
+        const DB_NAME = 'EMI_AI_DB';
+        const STORE_NAME = 'settings';
+        let db;
 
-        if (appConfig.day !== new Date().toDateString()) {
-            appConfig.used = 0;
-            appConfig.day = new Date().toDateString();
-            syncStorage();
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve();
+                };
+                request.onerror = (e) => reject(e);
+            });
         }
 
-        lucide.createIcons();
-        updateUI();
+        async function getSetting(key) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(STORE_NAME, 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        async function setSetting(key, value) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                store.put(value, key);
+                transaction.oncomplete = () => resolve();
+            });
+        }
+
+        // --- System State ---
+        let appConfig = { key: '' };
+
+        async function bootstrap() {
+            await initDB();
+            appConfig.key = await getSetting('api_key') || '';
+            document.getElementById('api-field').value = appConfig.key;
+            lucide.createIcons();
+        }
+
+        bootstrap();
 
         const wrapper = document.getElementById('chat-wrapper');
         const welcome = document.getElementById('welcome-ui');
         const mainForm = document.getElementById('main-form');
         const userIn = document.getElementById('user-input');
         const apiF = document.getElementById('api-field');
-        const limitF = document.getElementById('limit-field');
         const thinkS = document.getElementById('think-switch');
-        
-        apiF.value = appConfig.key;
-        limitF.value = appConfig.limit;
 
         userIn.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
         });
 
-        // --- Utils ---
+        // --- Database UI Actions ---
         function toggleSettings() { document.getElementById('settings-overlay').classList.toggle('hidden'); }
-        function syncStorage() {
-            localStorage.setItem('emi_key', appConfig.key);
-            localStorage.setItem('emi_limit', appConfig.limit);
-            localStorage.setItem('emi_used', appConfig.used);
-            localStorage.setItem('emi_day', appConfig.day);
-        }
-        function updateUI() {
-            document.getElementById('limit-counter').innerText = `${appConfig.used} / ${appConfig.limit}`;
-        }
-        function saveConfig() {
+        
+        async function saveConfig() {
             appConfig.key = apiF.value.trim();
-            appConfig.limit = parseInt(limitF.value) || 20;
-            syncStorage();
-            updateUI();
+            await setSetting('api_key', appConfig.key);
             toggleSettings();
+            console.log("Kľúč uložený do IndexedDB.");
         }
-        function resetData() { if(confirm("Naozaj?")) { localStorage.clear(); location.reload(); } }
 
-        // --- Chat Logic ---
+        async function resetDB() {
+            if(confirm("Naozaj chcete zmazať celú databázu?")) {
+                const request = indexedDB.deleteDatabase(DB_NAME);
+                request.onsuccess = () => location.reload();
+            }
+        }
+
+        // --- Chat UI Helpers ---
         function addMessage(role, text, sources = []) {
             welcome.classList.add('hidden');
             const row = document.createElement('div');
-            row.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-anim`;
+            row.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-anim mb-4`;
             
             const isAI = role === 'ai';
             let sourceHtml = '';
@@ -267,11 +290,15 @@
 
             row.innerHTML = `
                 <div class="flex gap-4 max-w-[85%] md:max-w-[70%] ${role === 'user' ? 'flex-row-reverse' : ''}">
-                    <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${isAI ? 'bg-[#1a1a20] border border-white/10' : 'bg-indigo-600'}">
+                    <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${isAI ? 'bg-[#1a1a20] border border-white/10' : 'bg-indigo-600 shadow-lg'}">
                         <i data-lucide="${isAI ? 'bot' : 'user'}" class="w-5 h-5 text-white ${isAI ? 'text-indigo-400' : ''}"></i>
                     </div>
-                    <div class="space-y-1">
-                        <div class="p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${role === 'user' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/10' : 'bg-[#1a1a20] border border-white/5 text-slate-200'}">
+                    <div class="space-y-1 ${role === 'user' ? 'text-right' : ''}">
+                        <div class="p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-md ${
+                            role === 'user' 
+                            ? 'user-bubble text-white' 
+                            : 'bg-[#1a1a20] border border-white/5 text-slate-200'
+                        }">
                             ${text}
                         </div>
                         ${sourceHtml}
@@ -284,11 +311,10 @@
             return row;
         }
 
-        // --- Deep Thinking Logic ---
         function addThinkingBlock() {
             welcome.classList.add('hidden');
             const row = document.createElement('div');
-            row.className = `flex justify-start message-anim`;
+            row.className = `flex justify-start message-anim mb-4`;
             row.id = "active-thinking";
             row.innerHTML = `
                 <div class="flex gap-4 w-full md:max-w-[70%]">
@@ -308,7 +334,7 @@
                         <div id="think-steps" class="space-y-2">
                             <div class="flex items-center gap-2 text-[10px] text-slate-400 animate-pulse">
                                 <div class="w-1 h-1 bg-indigo-500 rounded-full"></div>
-                                Inicializácia logických reťazcov...
+                                Inicializácia IndexedDB reťazcov...
                             </div>
                         </div>
                     </div>
@@ -326,63 +352,52 @@
             const clock = block.querySelector('#think-clock');
             const steps = block.querySelector('#think-steps');
             
-            const messages = [
-                "Analyzujem sémantiku vášho vstupu...",
-                "Vyhľadávam relevantné súvislosti na Google...",
-                "Overujem dôveryhodnosť zdrojov...",
-                "Simulujem kreatívne vetvenie príbehu...",
-                "Optimalizujem finálnu štruktúru odpovede...",
-                "Pripravujem pravdivý výstup..."
-            ];
-
             const maxTime = isDeep ? 90 : 5;
-            const realWait = isDeep ? 8000 : 1000; // Skutočné čakanie v ms (demo)
-            let current = 0;
+            let elapsed = 0;
+            const stepDuration = 100;
 
-            const interval = setInterval(() => {
-                current += 0.5;
-                const visualTime = Math.min((current / 5) * maxTime, maxTime);
-                const perc = Math.min((current / 5) * 100, 99);
-                
-                bar.style.width = perc + '%';
-                clock.innerText = `${Math.floor(visualTime)}s / ${maxTime}s`;
-                
-                if (Math.random() > 0.7 && messages.length > 0) {
-                    const step = document.createElement('div');
-                    step.className = "flex items-center gap-2 text-[10px] text-slate-500 animate-in fade-in slide-in-from-left-2";
-                    step.innerHTML = `<div class="w-1 h-1 bg-indigo-800 rounded-full"></div> ${messages.shift()}`;
-                    steps.appendChild(step);
-                }
-
-                if (current >= 5) clearInterval(interval);
-            }, 200);
-
-            await new Promise(r => setTimeout(r, realWait));
-            block.remove();
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    elapsed += (stepDuration / 1000);
+                    const perc = Math.min((elapsed / 3) * 100, 100); 
+                    const displayTime = Math.min((elapsed / 3) * maxTime, maxTime);
+                    
+                    bar.style.width = perc + '%';
+                    clock.innerText = `${Math.floor(displayTime)}s / ${maxTime}s`;
+                    
+                    if (elapsed >= 3) {
+                        clearInterval(interval);
+                        block.remove();
+                        resolve();
+                    }
+                }, stepDuration);
+            });
         }
 
         // --- API Execution ---
         async function runChat(voiceMode = false) {
             const val = userIn.value.trim();
-            if (!val || !appConfig.key) { if(!appConfig.key) toggleSettings(); return; }
-            if (appConfig.used >= appConfig.limit) { alert("Limit!"); return; }
+            if (!val) return;
+            
+            if (!appConfig.key) { 
+                toggleSettings(); 
+                return; 
+            }
 
             addMessage('user', val);
             userIn.value = '';
             userIn.style.height = 'auto';
 
-            appConfig.used++;
-            syncStorage();
-            updateUI();
-
-            await simulateThinking(thinkS.checked);
+            if (thinkS.checked) {
+                await simulateThinking(true);
+            }
 
             try {
                 const res = await callGemini(val, voiceMode);
                 addMessage('ai', res.text, res.sources);
                 if (res.audio) playRawAudio(res.audio);
             } catch (e) {
-                addMessage('ai', "Chyba jadra EMI. Skontrolujte kľúč.");
+                addMessage('ai', "Chyba komunikácie. Skontrolujte kľúč v IndexedDB.");
             }
         }
 
@@ -390,10 +405,7 @@
         function quickStart(t) { userIn.value = t; runChat(false); }
 
         async function callGemini(p, voice) {
-            const system = `Si EMI, vysoko pokročilý AI model. 
-            Hovoríš v slovenčine, si úprimný, pútavý a pravdivý. 
-            Využívaš hlboké uvažovanie pre najlepšie výsledky.`;
-            
+            const system = `Si EMI, vysoko pokročilý model. Hovorte v slovenčine. Buďte pravdivý a pútavý.`;
             const model = voice ? "gemini-2.5-flash-preview-tts" : "gemini-2.5-flash-preview-09-2025";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${appConfig.key}`;
 
@@ -411,8 +423,9 @@
             }
 
             const r = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            const data = await r.json();
+            if (!r.ok) throw new Error("API Fail");
             
+            const data = await r.json();
             const cand = data.candidates?.[0];
             const text = cand?.content?.parts?.find(p => p.text)?.text || "";
             const audio = cand?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
@@ -423,7 +436,7 @@
             return { text, sources, audio };
         }
 
-        // --- Voice Logic ---
+        // --- Voice & Audio ---
         let rec;
         function openLiveMode() {
             if(!appConfig.key) { toggleSettings(); return; }
@@ -473,3 +486,4 @@
     </script>
 </body>
 </html>
+
