@@ -22,561 +22,453 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .thinking-gradient {
-            background: linear-gradient(90deg, #6366f1, #a855f7, #6366f1);
-            background-size: 200% auto;
-            animation: moveGradient 3s linear infinite;
+        .thinking-shimmer {
+            background: linear-gradient(90deg, #1e1e24 0%, #2a2a35 50%, #1e1e24 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
         }
 
-        @keyframes moveGradient {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .message-in {
-            animation: slideIn 0.3s ease-out forwards;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
+        .message-anim { animation: fadeInUp 0.4s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .pulse-mic {
-            animation: pulse-red 1.5s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        .pulse-red { animation: pulseRed 2s infinite; }
+        @keyframes pulseRed {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="glass-panel sticky top-0 z-20 px-6 py-4 flex items-center justify-between border-b border-white/5">
+    <header class="glass-panel sticky top-0 z-30 px-6 py-4 flex items-center justify-between border-b border-white/10">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
                 <i data-lucide="bot" class="text-white w-6 h-6"></i>
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-white leading-none">EMI AI</h1>
-                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Deep Thinking & Voice Engine</span>
+                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Pokročilý Systém</span>
             </div>
         </div>
 
         <div class="flex items-center gap-4">
-            <div id="limit-display" class="hidden md:flex flex-col items-end mr-2">
-                <span class="text-[10px] text-slate-400 uppercase font-medium">Denný Limit</span>
+            <div class="hidden sm:flex flex-col items-end">
+                <span id="limit-label" class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Denné Správy</span>
                 <div class="flex items-center gap-2">
-                    <span id="limit-text" class="text-xs font-mono text-white">0/20</span>
-                    <div class="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <div id="limit-progress" class="h-full bg-indigo-500 transition-all duration-500" style="width: 0%"></div>
-                    </div>
+                    <span id="limit-counter" class="text-xs font-mono text-white">0 / 20</span>
                 </div>
             </div>
-            <button onclick="toggleSettings()" class="p-2 hover:bg-white/5 rounded-full transition-colors text-slate-400 hover:text-white">
-                <i data-lucide="settings" class="w-6 h-6"></i>
+            <button onclick="toggleSettings()" class="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-slate-300">
+                <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
         </div>
     </header>
 
-    <!-- Chat Window -->
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar">
-        <!-- Welcome Screen -->
-        <div id="welcome-screen" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto space-y-6">
-            <div class="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center animate-pulse">
-                <i data-lucide="brain" class="text-indigo-500 w-12 h-12"></i>
+    <!-- Chat Container -->
+    <main id="chat-wrapper" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar">
+        <!-- Welcome UI -->
+        <div id="welcome-ui" class="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-12">
+            <div class="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
+                <i data-lucide="brain-circuit" class="text-indigo-500 w-12 h-12"></i>
             </div>
-            <h2 class="text-3xl font-bold text-white">Ahoj, ja som EMI</h2>
-            <p class="text-slate-400 leading-relaxed">
-                Som pokročilá AI navrhnutá pre hlboké uvažovanie. Viem generovať príbehy, vyhľadávať fakty a teraz sa so mnou môžeš rozprávať aj naživo hlasom.
+            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI k vašim službám</h2>
+            <p class="text-slate-400 text-lg leading-relaxed mb-10">
+                Pokročilý model s hlbokým uvažovaním. Viem generovať dychberúce príbehy, vyhľadávať fakty a rozprávať sa s vami naživo.
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                <button onclick="quickAction('Napíš mi sci-fi príbeh o kolonizácii Marsu.')" class="p-4 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left flex items-center gap-3 group">
-                    <i data-lucide="history" class="text-indigo-400 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-sm">Generovať príbeh</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <button onclick="quickStart('Napíš mi dlhý a napínavý príbeh o umelej inteligencii v roku 2100.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i data-lucide="sparkles" class="text-indigo-400 w-5 h-5"></i>
+                        <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">Generovať Príbeh</span>
+                    </div>
+                    <p class="text-xs text-slate-500">EMI vytvorí originálny text na základe vašich požiadaviek.</p>
                 </button>
-                <button onclick="startVoiceMode()" class="p-4 glass-panel border-indigo-500/30 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left flex items-center gap-3 group">
-                    <i data-lucide="mic" class="text-red-400 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-sm">Hlasový režim (Live)</span>
+                <button onclick="openLiveMode()" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i data-lucide="mic" class="text-red-400 w-5 h-5"></i>
+                        <span class="font-bold text-white group-hover:text-red-300 transition-colors">Live Rozhovor</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Rozprávajte sa s EMI bez písania, hlasom v reálnom čase.</p>
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- Thinking Indicator (Hidden by default) -->
-    <div id="thinking-ui" class="hidden px-4 md:px-8 py-4 bg-[#0a0a0c]/80 backdrop-blur-md">
-        <div class="max-w-4xl mx-auto flex gap-4 items-start">
-            <div class="w-8 h-8 rounded-lg bg-[#1a1a20] border border-white/10 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="loader-2" class="text-indigo-400 w-5 h-5 animate-spin"></i>
-            </div>
-            <div class="flex-1 space-y-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-indigo-400">
-                        <i data-lucide="brain" class="w-4 h-4"></i>
-                        <span class="text-xs font-bold uppercase tracking-wider">EMI práve uvažuje...</span>
+    <!-- Input Bar -->
+    <footer class="p-4 md:p-6 bg-[#0a0a0c]">
+        <div class="max-w-4xl mx-auto">
+            <form id="main-form" class="relative">
+                <div class="absolute -inset-1.5 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-[2rem] blur-xl opacity-0 transition duration-500 group-focus-within:opacity-100"></div>
+                
+                <div class="relative bg-[#16161a] border border-white/10 rounded-[1.5rem] flex items-end p-2 gap-2 shadow-2xl">
+                    <button type="button" onclick="toggleVoice()" id="mic-trigger" class="p-3.5 text-slate-500 hover:text-red-400 transition-colors rounded-xl hover:bg-white/5">
+                        <i data-lucide="mic" class="w-6 h-6"></i>
+                    </button>
+                    
+                    <textarea 
+                        id="user-input" 
+                        rows="1" 
+                        placeholder="Napíšte správu pre EMI..."
+                        class="flex-1 bg-transparent border-none focus:ring-0 text-slate-200 py-3.5 px-2 resize-none max-h-48 outline-none text-base custom-scrollbar"
+                    ></textarea>
+                    
+                    <button type="submit" id="send-trigger" class="p-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-30">
+                        <i data-lucide="send" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                
+                <div class="mt-4 flex items-center justify-between px-3">
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none group">
+                            <div class="relative w-10 h-5 bg-white/10 rounded-full transition-colors group-has-[:checked]:bg-indigo-600">
+                                <input type="checkbox" id="think-switch" class="sr-only peer" checked>
+                                <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-500 group-has-[:checked]:text-indigo-400 uppercase tracking-widest">Hlboké uvažovanie</span>
+                        </label>
                     </div>
-                    <span id="thinking-timer" class="text-[10px] font-mono text-slate-500">0s / 90s</span>
+                    <span class="text-[10px] text-slate-600 font-medium">Model EMI 2.5 Flash • Google Grounding Aktívny</span>
                 </div>
-                <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div id="thinking-progress" class="h-full thinking-gradient transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <p class="text-[11px] text-slate-500 italic">Analyzujem kontext, overujem fakty a generujem optimálnu odpoveď...</p>
-            </div>
+            </form>
         </div>
-    </div>
-
-    <!-- Input Area -->
-    <footer class="p-4 md:p-6 bg-gradient-to-t from-[#0a0a0c] to-transparent">
-        <form id="chat-form" class="max-w-4xl mx-auto relative group">
-            <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-3xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
-            <div class="relative bg-[#1a1a20] border border-white/10 rounded-2xl shadow-2xl flex items-end p-2 pr-3">
-                <button
-                    type="button"
-                    id="mic-btn"
-                    onclick="toggleVoice()"
-                    class="p-3 text-slate-400 hover:text-red-400 transition-colors"
-                    title="Hlasový režim"
-                >
-                    <i data-lucide="mic" class="w-6 h-6"></i>
-                </button>
-                <textarea
-                    id="user-input"
-                    rows="1"
-                    placeholder="Opýtaj sa EMI..."
-                    class="w-full bg-transparent border-none focus:ring-0 text-slate-200 py-3 px-4 resize-none max-h-48 custom-scrollbar text-sm md:text-base outline-none"
-                ></textarea>
-                <button
-                    type="submit"
-                    id="send-btn"
-                    class="p-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <i data-lucide="send" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="mt-3 flex items-center justify-between px-2">
-                <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer group">
-                        <div class="relative w-8 h-4 bg-white/10 rounded-full transition-colors group-has-[:checked]:bg-indigo-600">
-                            <input type="checkbox" id="deep-think-toggle" class="sr-only peer" checked>
-                            <div class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-500 group-has-[:checked]:text-indigo-400 uppercase tracking-tight">Hlboké uvažovanie</span>
-                    </label>
-                </div>
-                <p class="text-[10px] text-slate-600 font-medium tracking-tight">EMI AI Voice Model v2.5</p>
-            </div>
-        </form>
     </footer>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-        <div class="bg-[#111114] border border-white/10 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-white/5">
-                <h3 class="text-lg font-bold flex items-center gap-2 text-white">
-                    <i data-lucide="settings" class="text-indigo-400 w-5 h-5"></i> Nastavenia
+    <!-- Settings -->
+    <div id="settings-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+        <div class="bg-[#111114] border border-white/10 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
+            <div class="px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i data-lucide="sliders" class="text-indigo-400"></i> Nastavenia EMI
                 </h3>
-                <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+                <button onclick="toggleSettings()" class="text-slate-500 hover:text-white"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6 space-y-6">
-                <div class="space-y-2">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
-                        Google API Key
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-400 normal-case hover:underline font-normal text-[10px]">Získať kľúč</a>
-                    </label>
-                    <div class="relative">
-                        <input 
-                            type="password" 
-                            id="api-key-input"
-                            placeholder="Vložte váš API kľúč..."
-                            class="w-full bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none"
-                        >
-                    </div>
+            <div class="p-8 space-y-8">
+                <div class="space-y-3">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Google Gemini API Key</label>
+                    <input type="password" id="api-field" placeholder="Vložte kľúč..." class="w-full bg-[#0a0a0c] border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all">
                 </div>
-
-                <div class="space-y-2">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Hlas EMI</label>
-                    <select id="voice-select" class="w-full bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none appearance-none text-slate-200">
-                        <option value="Kore">Kore (Ženský, pokojný)</option>
-                        <option value="Zephyr">Zephyr (Mužský, vážny)</option>
-                        <option value="Aoede">Aoede (Ženský, lyrický)</option>
-                        <option value="Charon">Charon (Hlboký, autoritatívny)</option>
-                    </select>
+                <div class="space-y-3">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Denný Limit Správ</label>
+                    <input type="number" id="limit-field" value="20" class="w-full bg-[#0a0a0c] border border-white/10 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none">
                 </div>
-
-                <div class="space-y-2">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Denný limit správ</label>
-                    <input 
-                        type="number" 
-                        id="limit-input"
-                        value="20"
-                        class="w-full bg-[#0a0a0c] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none"
-                    >
-                </div>
-
-                <button onclick="saveSettings()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/30">
-                    Uložiť a Zavrieť
+                <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-indigo-600/30">
+                    Uložiť zmeny
                 </button>
+                <button onclick="resetData()" class="w-full text-xs text-red-500/60 hover:text-red-500 transition-colors">Vymazať celú históriu</button>
             </div>
         </div>
     </div>
 
-    <!-- Voice Overlay -->
-    <div id="voice-overlay" class="fixed inset-0 z-40 hidden bg-[#0a0a0c]/95 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
-        <div class="relative mb-12">
-            <div id="voice-pulse" class="absolute inset-0 bg-indigo-500/20 rounded-full scale-150 blur-xl animate-pulse"></div>
-            <div class="w-32 h-32 bg-indigo-600 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 relative z-10">
-                <i data-lucide="mic" class="text-white w-12 h-12"></i>
+    <!-- Live Mode Overlay -->
+    <div id="live-overlay" class="fixed inset-0 z-50 hidden bg-[#0a0a0c]/98 backdrop-blur-3xl flex flex-col items-center justify-center p-10 text-center">
+        <div class="relative mb-16">
+            <div id="live-pulse" class="absolute inset-0 bg-indigo-500/30 rounded-full scale-150 blur-3xl animate-pulse"></div>
+            <div class="w-40 h-40 bg-indigo-600 rounded-[3rem] flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.4)] relative z-10">
+                <i data-lucide="mic" class="text-white w-16 h-16"></i>
             </div>
         </div>
-        <h2 id="voice-status" class="text-2xl font-bold text-white mb-2">Počúvam vás...</h2>
-        <p id="voice-transcript" class="text-slate-400 max-w-md italic min-h-[1.5em] mb-12">Hovorte teraz...</p>
-        <button onclick="stopVoiceMode()" class="px-8 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full font-bold hover:bg-red-500/20 transition-all">
+        <h2 id="live-status" class="text-3xl font-extrabold text-white mb-4">EMI vás počúva...</h2>
+        <div id="live-text" class="text-xl text-slate-400 max-w-xl italic min-h-[3rem] mb-16">Povedzte niečo...</div>
+        <button onclick="closeLiveMode()" class="px-10 py-4 bg-red-500/10 border border-red-500/40 text-red-400 rounded-2xl font-bold hover:bg-red-500/20 transition-all">
             Ukončiť Live Režim
         </button>
     </div>
 
     <script>
-        // --- State ---
-        let config = {
-            apiKey: localStorage.getItem('emi_api_key') || '',
+        // --- System State ---
+        let appConfig = {
+            key: localStorage.getItem('emi_key') || '',
             limit: parseInt(localStorage.getItem('emi_limit') || '20'),
-            sentToday: parseInt(localStorage.getItem('emi_sent_today') || '0'),
-            lastDate: localStorage.getItem('emi_last_date') || new Date().toDateString(),
-            voice: localStorage.getItem('emi_voice') || 'Kore'
+            used: parseInt(localStorage.getItem('emi_used') || '0'),
+            day: localStorage.getItem('emi_day') || new Date().toDateString()
         };
 
-        const today = new Date().toDateString();
-        if (config.lastDate !== today) {
-            config.sentToday = 0;
-            config.lastDate = today;
-            updateStorage();
+        if (appConfig.day !== new Date().toDateString()) {
+            appConfig.used = 0;
+            appConfig.day = new Date().toDateString();
+            syncStorage();
         }
 
-        // --- Initialization ---
         lucide.createIcons();
-        updateLimitUI();
+        updateUI();
+
+        const wrapper = document.getElementById('chat-wrapper');
+        const welcome = document.getElementById('welcome-ui');
+        const mainForm = document.getElementById('main-form');
+        const userIn = document.getElementById('user-input');
+        const apiF = document.getElementById('api-field');
+        const limitF = document.getElementById('limit-field');
+        const thinkS = document.getElementById('think-switch');
         
-        const chatContainer = document.getElementById('chat-container');
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
-        const thinkingUI = document.getElementById('thinking-ui');
-        const thinkingProgress = document.getElementById('thinking-progress');
-        const thinkingTimerText = document.getElementById('thinking-timer');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const limitInput = document.getElementById('limit-input');
-        const voiceSelect = document.getElementById('voice-select');
-        const deepThinkToggle = document.getElementById('deep-think-toggle');
-        const voiceOverlay = document.getElementById('voice-overlay');
-        const micBtn = document.getElementById('mic-btn');
+        apiF.value = appConfig.key;
+        limitF.value = appConfig.limit;
 
-        apiKeyInput.value = config.apiKey;
-        limitInput.value = config.limit;
-        voiceSelect.value = config.voice;
-
-        userInput.addEventListener('input', function() {
+        userIn.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
+            this.style.height = this.scrollHeight + 'px';
         });
 
-        // --- Core Functions ---
-        function toggleSettings() {
-            document.getElementById('settings-modal').classList.toggle('hidden');
+        // --- Utils ---
+        function toggleSettings() { document.getElementById('settings-overlay').classList.toggle('hidden'); }
+        function syncStorage() {
+            localStorage.setItem('emi_key', appConfig.key);
+            localStorage.setItem('emi_limit', appConfig.limit);
+            localStorage.setItem('emi_used', appConfig.used);
+            localStorage.setItem('emi_day', appConfig.day);
         }
-
-        function saveSettings() {
-            config.apiKey = apiKeyInput.value.trim();
-            config.limit = parseInt(limitInput.value) || 20;
-            config.voice = voiceSelect.value;
-            localStorage.setItem('emi_voice', config.voice);
-            updateStorage();
-            updateLimitUI();
+        function updateUI() {
+            document.getElementById('limit-counter').innerText = `${appConfig.used} / ${appConfig.limit}`;
+        }
+        function saveConfig() {
+            appConfig.key = apiF.value.trim();
+            appConfig.limit = parseInt(limitF.value) || 20;
+            syncStorage();
+            updateUI();
             toggleSettings();
         }
+        function resetData() { if(confirm("Naozaj?")) { localStorage.clear(); location.reload(); } }
 
-        function updateStorage() {
-            localStorage.setItem('emi_api_key', config.apiKey);
-            localStorage.setItem('emi_limit', config.limit.toString());
-            localStorage.setItem('emi_sent_today', config.sentToday.toString());
-            localStorage.setItem('emi_last_date', config.lastDate);
-        }
-
-        function updateLimitUI() {
-            const text = document.getElementById('limit-text');
-            const progress = document.getElementById('limit-progress');
-            text.innerText = `${config.sentToday}/${config.limit}`;
-            const perc = Math.min((config.sentToday / config.limit) * 100, 100);
-            progress.style.width = perc + '%';
-        }
-
-        function appendMessage(role, content, groundings = []) {
-            welcomeScreen.classList.add('hidden');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-in`;
+        // --- Chat Logic ---
+        function addMessage(role, text, sources = []) {
+            welcome.classList.add('hidden');
+            const row = document.createElement('div');
+            row.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-anim`;
             
-            let groundingHTML = '';
-            if (groundings.length > 0) {
-                groundingHTML = `<div class="mt-3 flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                    ${groundings.map(g => `
-                        <a href="${g.uri}" target="_blank" class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded-full flex items-center gap-1 hover:bg-indigo-500/20 border border-indigo-500/10">
-                            <i data-lucide="search" class="w-2.5 h-2.5"></i> ${g.title || 'Zdroj'}
+            const isAI = role === 'ai';
+            let sourceHtml = '';
+            if (sources.length > 0) {
+                sourceHtml = `<div class="mt-4 flex flex-wrap gap-2 pt-3 border-t border-white/5">
+                    ${sources.map(s => `
+                        <a href="${s.uri}" target="_blank" class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1.5">
+                            <i data-lucide="search" class="w-3 h-3"></i> ${s.title || 'Zdroj'}
                         </a>
                     `).join('')}
                 </div>`;
             }
 
-            msgDiv.innerHTML = `
-                <div class="flex gap-3 max-w-[85%] md:max-w-[75%] ${role === 'user' ? 'flex-row-reverse' : ''}">
-                    <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${role === 'user' ? 'bg-indigo-600' : 'bg-[#1a1a20] border border-white/10'}">
-                        <i data-lucide="${role === 'user' ? 'user' : 'bot'}" class="w-4 h-4 text-white ${role !== 'user' ? 'text-indigo-400' : ''}"></i>
+            row.innerHTML = `
+                <div class="flex gap-4 max-w-[85%] md:max-w-[70%] ${role === 'user' ? 'flex-row-reverse' : ''}">
+                    <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${isAI ? 'bg-[#1a1a20] border border-white/10' : 'bg-indigo-600'}">
+                        <i data-lucide="${isAI ? 'bot' : 'user'}" class="w-5 h-5 text-white ${isAI ? 'text-indigo-400' : ''}"></i>
                     </div>
                     <div class="space-y-1">
-                        <div class="p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${role === 'user' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-[#1a1a20] border border-white/5 text-slate-200'}">
-                            ${content}
+                        <div class="p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${role === 'user' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/10' : 'bg-[#1a1a20] border border-white/5 text-slate-200'}">
+                            ${text}
                         </div>
-                        ${groundingHTML}
+                        ${sourceHtml}
                     </div>
                 </div>
             `;
-            chatContainer.appendChild(msgDiv);
+            wrapper.appendChild(row);
             lucide.createIcons();
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            wrapper.scrollTop = wrapper.scrollHeight;
+            return row;
         }
 
-        async function quickAction(text) {
-            userInput.value = text;
-            chatForm.dispatchEvent(new Event('submit'));
+        // --- Deep Thinking Logic ---
+        function addThinkingBlock() {
+            welcome.classList.add('hidden');
+            const row = document.createElement('div');
+            row.className = `flex justify-start message-anim`;
+            row.id = "active-thinking";
+            row.innerHTML = `
+                <div class="flex gap-4 w-full md:max-w-[70%]">
+                    <div class="w-9 h-9 rounded-xl bg-[#1a1a20] border border-white/10 flex items-center justify-center">
+                        <i data-lucide="brain" class="w-5 h-5 text-indigo-400 animate-pulse"></i>
+                    </div>
+                    <div class="flex-1 bg-[#1a1a20] border border-white/5 rounded-2xl p-5 space-y-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="zap" class="w-3 h-3"></i> EMI Hlboké uvažovanie
+                            </span>
+                            <span id="think-clock" class="text-[10px] font-mono text-slate-500">0s / 90s</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div id="think-bar" class="h-full progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <div id="think-steps" class="space-y-2">
+                            <div class="flex items-center gap-2 text-[10px] text-slate-400 animate-pulse">
+                                <div class="w-1 h-1 bg-indigo-500 rounded-full"></div>
+                                Inicializácia logických reťazcov...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(row);
+            lucide.createIcons();
+            wrapper.scrollTop = wrapper.scrollHeight;
+            return row;
         }
 
-        // --- Voice Logic ---
-        let recognition;
-        let isVoiceMode = false;
-
-        function startVoiceMode() {
-            if (!config.apiKey) { toggleSettings(); return; }
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Váš prehliadač nepodporuje rozpoznávanie reči.");
-                return;
-            }
-
-            isVoiceMode = true;
-            voiceOverlay.classList.remove('hidden');
-            micBtn.classList.add('pulse-mic', 'text-red-400');
-
-            recognition = new SpeechRecognition();
-            recognition.lang = 'sk-SK';
-            recognition.continuous = false;
-            recognition.interimResults = true;
-
-            recognition.onresult = (event) => {
-                const transcript = Array.from(event.results)
-                    .map(result => result[0])
-                    .map(result => result.transcript)
-                    .join('');
-                document.getElementById('voice-transcript').innerText = transcript;
-                if (event.results[0].isFinal) {
-                    processVoiceCommand(transcript);
-                }
-            };
-
-            recognition.onend = () => {
-                if (isVoiceMode) recognition.start();
-            };
-
-            recognition.onerror = () => stopVoiceMode();
-            recognition.start();
-        }
-
-        function stopVoiceMode() {
-            isVoiceMode = false;
-            if (recognition) recognition.stop();
-            voiceOverlay.classList.add('hidden');
-            micBtn.classList.remove('pulse-mic', 'text-red-400');
-        }
-
-        function toggleVoice() {
-            if (isVoiceMode) stopVoiceMode();
-            else startVoiceMode();
-        }
-
-        async function processVoiceCommand(text) {
-            if (!text.trim()) return;
-            stopVoiceMode();
+        async function simulateThinking(isDeep) {
+            const block = addThinkingBlock();
+            const bar = block.querySelector('#think-bar');
+            const clock = block.querySelector('#think-clock');
+            const steps = block.querySelector('#think-steps');
             
-            // Execute as normal submit
-            userInput.value = text;
-            await executeChat(true);
+            const messages = [
+                "Analyzujem sémantiku vášho vstupu...",
+                "Vyhľadávam relevantné súvislosti na Google...",
+                "Overujem dôveryhodnosť zdrojov...",
+                "Simulujem kreatívne vetvenie príbehu...",
+                "Optimalizujem finálnu štruktúru odpovede...",
+                "Pripravujem pravdivý výstup..."
+            ];
+
+            const maxTime = isDeep ? 90 : 5;
+            const realWait = isDeep ? 8000 : 1000; // Skutočné čakanie v ms (demo)
+            let current = 0;
+
+            const interval = setInterval(() => {
+                current += 0.5;
+                const visualTime = Math.min((current / 5) * maxTime, maxTime);
+                const perc = Math.min((current / 5) * 100, 99);
+                
+                bar.style.width = perc + '%';
+                clock.innerText = `${Math.floor(visualTime)}s / ${maxTime}s`;
+                
+                if (Math.random() > 0.7 && messages.length > 0) {
+                    const step = document.createElement('div');
+                    step.className = "flex items-center gap-2 text-[10px] text-slate-500 animate-in fade-in slide-in-from-left-2";
+                    step.innerHTML = `<div class="w-1 h-1 bg-indigo-800 rounded-full"></div> ${messages.shift()}`;
+                    steps.appendChild(step);
+                }
+
+                if (current >= 5) clearInterval(interval);
+            }, 200);
+
+            await new Promise(r => setTimeout(r, realWait));
+            block.remove();
         }
 
         // --- API Execution ---
-        chatForm.onsubmit = (e) => {
-            e.preventDefault();
-            executeChat(false);
-        };
+        async function runChat(voiceMode = false) {
+            const val = userIn.value.trim();
+            if (!val || !appConfig.key) { if(!appConfig.key) toggleSettings(); return; }
+            if (appConfig.used >= appConfig.limit) { alert("Limit!"); return; }
 
-        async function executeChat(withAudio) {
-            const text = userInput.value.trim();
-            if (!text || thinkingUI.classList.contains('flex')) return;
+            addMessage('user', val);
+            userIn.value = '';
+            userIn.style.height = 'auto';
 
-            if (config.sentToday >= config.limit) {
-                appendMessage('ai', 'Denný limit vyčerpaný.');
-                return;
-            }
+            appConfig.used++;
+            syncStorage();
+            updateUI();
 
-            appendMessage('user', text);
-            userInput.value = '';
-            userInput.style.height = 'auto';
-            
-            config.sentToday++;
-            updateStorage();
-            updateLimitUI();
-
-            thinkingUI.classList.remove('hidden');
-            thinkingUI.classList.add('flex');
-            
-            let thinkingTime = 0;
-            const maxThinkingTime = deepThinkToggle.checked ? 10 : 1; 
-            
-            const thinkingInterval = setInterval(() => {
-                thinkingTime += 0.2;
-                const progress = Math.min((thinkingTime / maxThinkingTime) * 100, 99);
-                thinkingProgress.style.width = progress + '%';
-                thinkingTimerText.innerText = `${Math.floor(thinkingTime * 9)}s / 90s`;
-            }, 200);
+            await simulateThinking(thinkS.checked);
 
             try {
-                if (deepThinkToggle.checked) await new Promise(r => setTimeout(r, 4000));
-                
-                const response = await callGemini(text, withAudio);
-                clearInterval(thinkingInterval);
-                thinkingUI.classList.replace('flex', 'hidden');
-                
-                appendMessage('ai', response.text, response.grounding);
-                
-                if (response.audioData) {
-                    playAudio(response.audioData);
-                }
-
-            } catch (err) {
-                clearInterval(thinkingInterval);
-                thinkingUI.classList.replace('flex', 'hidden');
-                appendMessage('ai', "Chyba jadra EMI. Skontrolujte kľúč.");
+                const res = await callGemini(val, voiceMode);
+                addMessage('ai', res.text, res.sources);
+                if (res.audio) playRawAudio(res.audio);
+            } catch (e) {
+                addMessage('ai', "Chyba jadra EMI. Skontrolujte kľúč.");
             }
         }
 
-        async function callGemini(prompt, withAudio) {
-            const systemPrompt = `Si EMI, vysoko inteligentný model. Hovorte prirodzene a pútavo. ${withAudio ? 'Keďže odpovedáte hlasom, buďte stručnejší a jasnejší.' : ''}`;
-            const model = withAudio ? "gemini-2.5-flash-preview-tts" : "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.apiKey}`;
+        mainForm.onsubmit = (e) => { e.preventDefault(); runChat(false); };
+        function quickStart(t) { userIn.value = t; runChat(false); }
+
+        async function callGemini(p, voice) {
+            const system = `Si EMI, vysoko pokročilý AI model. 
+            Hovoríš v slovenčine, si úprimný, pútavý a pravdivý. 
+            Využívaš hlboké uvažovanie pre najlepšie výsledky.`;
+            
+            const model = voice ? "gemini-2.5-flash-preview-tts" : "gemini-2.5-flash-preview-09-2025";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${appConfig.key}`;
 
             const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ parts: [{ text: p }] }],
+                systemInstruction: { parts: [{ text: system }] },
                 tools: [{ "google_search": {} }]
             };
 
-            if (withAudio) {
+            if (voice) {
                 payload.generationConfig = {
                     responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: config.voice }
-                        }
-                    }
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } }
                 };
             }
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error();
-
-            const result = await response.json();
-            const text = result.candidates?.[0]?.content?.parts?.find(p => p.text)?.text || "";
-            const audioPart = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-            const grounding = result.candidates?.[0]?.groundingMetadata?.groundingAttributions?.map(a => ({
+            const r = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            const data = await r.json();
+            
+            const cand = data.candidates?.[0];
+            const text = cand?.content?.parts?.find(p => p.text)?.text || "";
+            const audio = cand?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+            const sources = cand?.groundingMetadata?.groundingAttributions?.map(a => ({
                 uri: a.web?.uri, title: a.web?.title
             })) || [];
 
-            return { 
-                text, 
-                grounding, 
-                audioData: audioPart ? audioPart.inlineData.data : null 
-            };
+            return { text, sources, audio };
         }
 
-        // --- PCM to WAV & Playback ---
-        function playAudio(base64Data) {
-            const binaryString = atob(base64Data);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
+        // --- Voice Logic ---
+        let rec;
+        function openLiveMode() {
+            if(!appConfig.key) { toggleSettings(); return; }
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SR) return alert("Nie je podporované.");
             
-            const wavData = createWavHeader(bytes.buffer, 24000);
-            const blob = new Blob([wavData], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audio.play();
-        }
-
-        function createWavHeader(pcmBuffer, sampleRate) {
-            const numOfChannels = 1;
-            const bytesPerSample = 2;
-            const blockAlign = numOfChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = pcmBuffer.byteLength;
-            const headerSize = 44;
-            const wav = new ArrayBuffer(headerSize + dataSize);
-            const view = new DataView(wav);
-
-            const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
+            document.getElementById('live-overlay').classList.remove('hidden');
+            rec = new SR();
+            rec.lang = 'sk-SK';
+            rec.onresult = (e) => {
+                const t = e.results[0][0].transcript;
+                document.getElementById('live-text').innerText = t;
+                if(e.results[0].isFinal) {
+                    closeLiveMode();
+                    userIn.value = t;
+                    runChat(true);
                 }
             };
+            rec.start();
+        }
+        function closeLiveMode() {
+            document.getElementById('live-overlay').classList.add('hidden');
+            if(rec) rec.stop();
+        }
+        function toggleVoice() { openLiveMode(); }
 
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + dataSize, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true);
-            view.setUint16(22, numOfChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, byteRate, true);
-            view.setUint16(32, blockAlign, true);
-            view.setUint16(34, bytesPerSample * 8, true);
-            writeString(36, 'data');
-            view.setUint32(40, dataSize, true);
+        function playRawAudio(b64) {
+            const bin = atob(b64);
+            const buf = new Uint8Array(bin.length);
+            for(let i=0; i<bin.length; i++) buf[i] = bin.charCodeAt(i);
+            const wav = createWav(buf.buffer, 24000);
+            const url = URL.createObjectURL(new Blob([wav], {type:'audio/wav'}));
+            new Audio(url).play();
+        }
 
-            const pcmView = new Uint8Array(pcmBuffer);
-            const wavView = new Uint8Array(wav);
-            wavView.set(pcmView, 44);
-
-            return wav;
+        function createWav(pcm, rate) {
+            const h = new ArrayBuffer(44 + pcm.byteLength);
+            const v = new DataView(h);
+            const s = (o, str) => { for(let i=0; i<str.length; i++) v.setUint8(o+i, str.charCodeAt(i)); };
+            s(0, 'RIFF'); v.setUint32(4, 36 + pcm.byteLength, true); s(8, 'WAVE'); s(12, 'fmt ');
+            v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+            v.setUint32(24, rate, true); v.setUint32(28, rate*2, true); v.setUint16(32, 2, true);
+            v.setUint16(34, 16, true); s(36, 'data'); v.setUint32(40, pcm.byteLength, true);
+            new Uint8Array(h, 44).set(new Uint8Array(pcm));
+            return h;
         }
     </script>
 </body>
