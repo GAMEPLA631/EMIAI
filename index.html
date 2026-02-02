@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMI AI Chat - Pamäť a Vyhľadávanie</title>
+    <title>EMI AI Chat - Čistý Text a Pamäť</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -60,7 +60,7 @@
             </div>
             <div>
                 <h1 class="text-lg font-bold tracking-tight text-white leading-none">EMI AI</h1>
-                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Pamäť & Vyhľadávanie</span>
+                <span class="text-[10px] uppercase tracking-widest text-indigo-400 font-bold">Čistý Text & Vyhľadávanie</span>
             </div>
         </div>
 
@@ -82,21 +82,21 @@
             <div class="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
                 <i data-lucide="brain-circuit" class="text-indigo-500 w-12 h-12"></i>
             </div>
-            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI s pamäťou</h2>
+            <h2 class="text-4xl font-extrabold text-white mb-4 tracking-tight">EMI bez symbolov</h2>
             <p class="text-slate-400 text-lg leading-relaxed mb-10">
-                Pamätám si našu históriu, viem vyhľadávať na Google a YouTube a moje odpovede sú vždy aktuálne.
+                Moje odpovede sú teraz v čistom texte bez hviezdičiek a mriežok. Pamätám si našu históriu a vyhľadávam na webe.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <button onclick="quickStart('Nájdi mi najnovšie videá o vesmírnom programe Artemis na YouTube.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
+                <button onclick="quickStart('Nájdi mi YouTube videá o najrýchlejších autách sveta.')" class="p-5 glass-panel rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
                         <i data-lucide="youtube" class="text-red-400 w-5 h-5"></i>
-                        <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">Hľadať na YouTube</span>
+                        <span class="font-bold text-white group-hover:text-indigo-300 transition-colors">YouTube Videá</span>
                     </div>
                 </button>
-                <button onclick="quickStart('Kto vyhral posledné majstrovstvá sveta vo futbale? Vyhľadaj to.')" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
+                <button onclick="quickStart('Napíš mi príbeh o ceste na Mesiac.')" class="p-5 glass-panel rounded-2xl border-indigo-500/20 hover:border-indigo-500 hover:bg-indigo-500/10 transition-all text-left group">
                     <div class="flex items-center gap-3 mb-2">
-                        <i data-lucide="search" class="text-indigo-400 w-5 h-5"></i>
-                        <span class="font-bold text-white group-hover:text-red-300 transition-colors">Hľadať na Google</span>
+                        <i data-lucide="book-open" class="text-indigo-400 w-5 h-5"></i>
+                        <span class="font-bold text-white group-hover:text-red-300 transition-colors">Príbeh (Čistý text)</span>
                     </div>
                 </button>
             </div>
@@ -164,7 +164,7 @@
 
     <script>
         // --- Database Management ---
-        const DB_NAME = 'EMI_ADVANCED_DB';
+        const DB_NAME = 'EMI_CLEAN_TEXT_DB';
         const STORE_SETTINGS = 'settings';
         const STORE_HISTORY = 'history';
         let db;
@@ -188,7 +188,8 @@
 
         async function getFromDB(store, key) {
             return new Promise(r => {
-                const req = db.transaction(store).objectStore(store).get(key);
+                const tx = db.transaction(store, 'readonly');
+                const req = tx.objectStore(store).get(key);
                 req.onsuccess = () => r(req.result);
             });
         }
@@ -209,7 +210,6 @@
             document.getElementById('api-field').value = appConfig.key;
             lucide.createIcons();
             
-            // Re-render history if it exists
             if (chatHistory.length > 0) {
                 welcome.classList.add('hidden');
                 chatHistory.forEach(msg => {
@@ -248,13 +248,18 @@
 
         function resetAllData() { if(confirm("Toto vymaže kľúč aj históriu. Pokračovať?")) { indexedDB.deleteDatabase(DB_NAME); location.reload(); } }
 
+        // --- Utils: Clean Text ---
+        function cleanFormatting(text) {
+            // Odstráni všetky hviezdičky, mriežky a iné markdown znaky
+            return text.replace(/[*#_>`~]/g, '').trim();
+        }
+
         // --- TTS & STT ---
         function speakText(text) {
             if (!ttsSwitch.checked) return;
             window.speechSynthesis.cancel();
             
-            // Cleanup: Odstránenie markdown znakov pre čítanie
-            const cleanText = text.replace(/\*\*/g, '').replace(/__/g, '').replace(/###/g, '');
+            const cleanText = cleanFormatting(text);
             
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = 'sk-SK';
@@ -339,7 +344,6 @@
             const val = userIn.value.trim();
             if (!val || !appConfig.key) { if(!appConfig.key) toggleSettings(); return; }
 
-            // Add to history and UI
             chatHistory.push({ role: 'user', content: val });
             renderMessage('user', val);
             userIn.value = '';
@@ -351,12 +355,14 @@
                 const res = await callGemini();
                 thinking.remove();
                 
-                // Save AI response
-                chatHistory.push({ role: 'model', content: res.text, sources: res.sources });
+                // Vyčistenie textu pred uložením a zobrazením
+                const cleanedText = cleanFormatting(res.text);
+                
+                chatHistory.push({ role: 'model', content: cleanedText, sources: res.sources });
                 await saveToDB(STORE_HISTORY, 'chat_log', chatHistory);
                 
-                renderMessage('ai', res.text, res.sources);
-                speakText(res.text);
+                renderMessage('ai', cleanedText, res.sources);
+                speakText(cleanedText);
             } catch (e) {
                 thinking.remove();
                 renderMessage('ai', "Nastala chyba pri hľadaní odpovede. Skontrolujte prosím váš kľúč.");
@@ -372,7 +378,7 @@
                         <i data-lucide="search" class="w-5 h-5 text-indigo-400"></i>
                     </div>
                     <div class="bg-[#1a1a20] border border-white/5 p-4 rounded-2xl text-xs text-slate-400">
-                        EMI prehľadáva Google a YouTube...
+                        EMI prehľadáva zdroje...
                     </div>
                 </div>
             `;
@@ -383,17 +389,20 @@
         }
 
         async function callGemini() {
-            // Konverzia histórie pre API formát (iba textové časti)
             const contents = chatHistory.map(item => ({
                 role: item.role,
                 parts: [{ text: item.content }]
             }));
 
+            // Prísna inštrukcia na odstránenie formátovania
             const system = `Si EMI, vysoko pokročilá AI asistentka. 
             Máš prístup k vyhľadávaniu Google a YouTube. 
-            Vždy uvádzaj pravdivé fakty a ak nájdeš videá alebo zdroje, pridaj ich. 
-            Tvoja odpoveď bude prečítaná nahlas, tak sa vyhýbaj nadmernému používaniu symbolov. 
-            Odpovedaj v slovenčine.`;
+            VŽDY ODPOVEDAJ LEN ČISTÝM TEXTOM. 
+            NIKDY nepoužívaj hviezdičky (*) pre tučné písmo alebo kurzívu. 
+            NIKDY nepoužívaj mriežky (#) pre nadpisy. 
+            Ak chceš niečo zdôrazniť, použi veľké písmená alebo slová ako "dôležité:". 
+            Tvoje odpovede musia byť čisté a bez akýchkoľvek markdown symbolov. 
+            Odpovedaj v slovenčine. Ak nájdeš videá, pridaj ich odkazy ako zdroje.`;
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${appConfig.key}`;
 
