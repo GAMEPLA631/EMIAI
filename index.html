@@ -47,8 +47,8 @@
             <div>
                 <h1 class="font-black text-xl tracking-tighter bg-gradient-to-r from-indigo-300 via-white to-cyan-300 bg-clip-text text-transparent uppercase">EMI ULTIMATE</h1>
                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full pulsar"></span>
-                    <span class="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase">Local IndexedDB Storage Active</span>
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full pulsar" id="dbIndicator"></span>
+                    <span class="text-[9px] text-slate-400 font-bold tracking-[0.2em] uppercase" id="dbStatusText">Pripojenie k IndexedDB...</span>
                 </div>
             </div>
         </div>
@@ -114,9 +114,9 @@
                 </div>
             </div>
             <div class="flex justify-center mt-6 gap-8 opacity-40">
-                <span class="text-[8px] font-black uppercase tracking-[0.3em]">IndexedDB Encryption</span>
-                <span class="text-[8px] font-black uppercase tracking-[0.3em]">Chain-of-Thought AI</span>
-                <span class="text-[8px] font-black uppercase tracking-[0.3em]">No Cloud Latency</span>
+                <span class="text-[8px] font-black uppercase tracking-[0.3em]">IndexedDB Persistent</span>
+                <span class="text-[8px] font-black uppercase tracking-[0.3em]">Neural Reasoning Engine</span>
+                <span class="text-[8px] font-black uppercase tracking-[0.3em]">Zero Cloud Latency</span>
             </div>
         </div>
     </footer>
@@ -160,20 +160,6 @@
     </div>
 
     <script>
-        // --- INDEXEDDB SETUP ---
-        let db;
-        const dbRequest = indexedDB.open("EmiUltimateDB", 3);
-        dbRequest.onupgradeneeded = (e) => {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains("messages")) {
-                db.createObjectStore("messages", { keyPath: "id", autoIncrement: true });
-            }
-        };
-        dbRequest.onsuccess = (e) => {
-            db = e.target.result;
-            loadMessagesFromDB();
-        };
-
         // --- GLOBAL STATE ---
         window.state = {
             apiKey: localStorage.getItem('emi_key') || '',
@@ -183,45 +169,80 @@
             attachments: []
         };
 
-        // --- INITIALIZE ---
-        lucide.createIcons();
-        marked.setOptions({ highlight: (code) => hljs.highlightAuto(code).value, breaks: true });
-
-        const recognition = window.webkitSpeechRecognition ? new webkitSpeechRecognition() : null;
-        if(recognition) {
-            recognition.lang = 'sk-SK';
-            recognition.onresult = (e) => {
-                document.getElementById('userInput').value += e.results[0][0].transcript;
-                window.toggleSpeech();
-            };
-        }
-
-        function loadVoices() {
+        // --- GLOBAL UTILITIES ---
+        window.loadVoices = () => {
             const select = document.getElementById('voiceSelect');
+            if (!select) return;
             const voices = speechSynthesis.getVoices();
             select.innerHTML = voices.map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
-        }
-        speechSynthesis.onvoiceschanged = loadVoices;
+        };
+        speechSynthesis.onvoiceschanged = window.loadVoices;
+
+        window.showToast = (text) => {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-32 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/50 px-8 py-4 rounded-[2rem] shadow-2xl z-50 animate-in slide-in-from-bottom-5 glass';
+            toast.innerHTML = `<p class="text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-3"><i data-lucide="info" class="w-4 h-4"></i> ${text}</p>`;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.remove(), 4000);
+        };
 
         // --- DATABASE OPS ---
+        let db;
+        const dbRequest = indexedDB.open("EmiUltimateDB", 5); // Version 5
+        
+        dbRequest.onupgradeneeded = (e) => {
+            const upgradeDb = e.target.result;
+            if (!upgradeDb.objectStoreNames.contains("messages")) {
+                upgradeDb.createObjectStore("messages", { keyPath: "id", autoIncrement: true });
+            }
+        };
+
+        dbRequest.onsuccess = (e) => {
+            db = e.target.result;
+            document.getElementById('dbIndicator').classList.remove('bg-emerald-500');
+            document.getElementById('dbIndicator').classList.add('bg-cyan-400');
+            document.getElementById('dbStatusText').innerText = "Lokálna Pamäť Synchronizovaná";
+            loadMessagesFromDB();
+        };
+
+        dbRequest.onerror = (e) => {
+            console.error("Database Error:", e.target.error);
+            window.showToast("CHYBA DATABÁZY: Dáta sa neukladajú.");
+        };
+
         function saveToDB(message) {
-            const tx = db.transaction("messages", "readwrite");
-            tx.objectStore("messages").add(message);
+            if (!db) {
+                console.warn("DB not ready, queueing message...");
+                setTimeout(() => saveToDB(message), 500);
+                return;
+            }
+            try {
+                const tx = db.transaction("messages", "readwrite");
+                const store = tx.objectStore("messages");
+                store.add(message);
+            } catch (err) {
+                console.error("Critical Save Error:", err);
+                window.showToast("Nepodarilo sa uložiť správu do DB.");
+            }
         }
 
         function loadMessagesFromDB() {
+            if (!db) return;
             const tx = db.transaction("messages", "readonly");
-            tx.objectStore("messages").getAll().onsuccess = (e) => {
+            const store = tx.objectStore("messages");
+            store.getAll().onsuccess = (e) => {
                 const messages = e.target.result;
                 if (messages.length > 0) {
                     document.getElementById('empty-state').classList.add('hidden');
-                    messages.forEach(appendMessageUI);
+                    messages.forEach(window.appendMessageUI);
                 }
             };
         }
 
         window.clearChat = () => {
             if(!confirm("ELIMINOVAŤ DÁTA? Táto akcia natrvalo vymaže celú lokálnu históriu.")) return;
+            if (!db) return;
             const tx = db.transaction("messages", "readwrite");
             tx.objectStore("messages").clear().onsuccess = () => {
                 document.getElementById('chatContainer').innerHTML = '';
@@ -230,171 +251,7 @@
             };
         };
 
-        // --- AI LOGIC ---
-        async function fetchWithRetry(url, options, retries = 5, delay = 1000) {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const res = await fetch(url, options);
-                    if (res.ok) return await res.json();
-                    if (res.status !== 429 && res.status < 500) throw new Error(`HTTP ${res.status}`);
-                } catch (err) { if (i === retries - 1) throw err; }
-                await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
-            }
-        }
-
-        window.callEMI = async (prompt, media) => {
-            window.state.isThinking = true;
-            document.getElementById('thinkingOverlay').classList.remove('hidden');
-            const status = document.getElementById('thinkingStatus');
-            const phases = ["Kvantová analýza...", "Hĺbkové uvažovanie...", "Syntéza vedomostí...", "Kryštalizácia pravdy..."];
-            let pIdx = 0;
-            const interval = setInterval(() => { status.innerText = phases[pIdx % phases.length]; pIdx++; }, 2500);
-
-            try {
-                const parts = [{ text: prompt || "Analyzuj vstupy." }];
-                media.forEach(m => parts.push({ inlineData: { mimeType: m.mime, data: m.base64 } }));
-
-                const system = `Si EMI, AI s hlbokým uvažovaním. 
-                1. Každú odpoveď ZAČNI blokom <reasoning> (aspoň 4 odstavce analýzy).
-                2. Buď multimodálna (pozri si obrázky/videá).
-                3. Vždy hovor pravdu. Odpovedaj v slovenčine.
-                4. Ak vidíš video, analyzuj ho celé sekundu po sekunde.`;
-
-                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${window.state.apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts }],
-                        systemInstruction: { parts: [{ text: system }] },
-                        tools: [{ google_search: {} }]
-                    })
-                });
-
-                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "EMI neodpovedá.";
-                let thinking = "", content = rawText;
-                const match = rawText.match(/<reasoning>([\s\S]*?)<\/reasoning>/);
-                if (match) {
-                    thinking = match[1].trim();
-                    content = rawText.replace(/<reasoning>[\s\S]*?<\/reasoning>/, "").trim();
-                }
-
-                const sources = data.candidates?.[0]?.groundingMetadata?.groundingAttributions?.map(a => ({
-                    uri: a.web?.uri, title: a.web?.title
-                })) || [];
-
-                const botMsg = { role: 'assistant', content, thinking, sources, timestamp: Date.now() };
-                saveToDB(botMsg);
-                appendMessageUI(botMsg);
-
-                if(window.state.isTTSActive) window.speak(content);
-
-            } catch (err) {
-                window.showToast("CHYBA: Jadro nereaguje. Skontrolujte API kľúč.");
-                console.error(err);
-            } finally {
-                clearInterval(interval);
-                window.state.isThinking = false;
-                document.getElementById('thinkingOverlay').classList.add('hidden');
-            }
-        };
-
-        // --- HANDLERS ---
-        window.handleSend = async () => {
-            const input = document.getElementById('userInput');
-            const prompt = input.value.trim();
-            if ((!prompt && window.state.attachments.length === 0) || window.state.isThinking) return;
-
-            if(!window.state.apiKey) return toggleSettings();
-
-            const userMsg = { role: 'user', content: prompt, media: [...window.state.attachments], timestamp: Date.now() };
-            saveToDB(userMsg);
-            appendMessageUI(userMsg);
-            document.getElementById('empty-state').classList.add('hidden');
-
-            const mediaToSend = [...window.state.attachments];
-            input.value = '';
-            input.style.height = 'auto';
-            window.state.attachments = [];
-            window.renderAttachments();
-            
-            await window.callEMI(prompt, mediaToSend);
-        };
-
-        window.toggleSettings = () => {
-            document.getElementById('settingsModal').classList.toggle('hidden');
-            document.getElementById('apiKeyInput').value = window.state.apiKey;
-            loadVoices();
-        };
-
-        window.saveSettings = () => {
-            window.state.apiKey = document.getElementById('apiKeyInput').value;
-            localStorage.setItem('emi_key', window.state.apiKey);
-            window.toggleSettings();
-            window.showToast("Neurálna konfigurácia synchronizovaná.");
-        };
-
-        window.toggleTTS = () => {
-            window.state.isTTSActive = !window.state.isTTSActive;
-            localStorage.setItem('emi_tts', window.state.isTTSActive);
-            const icon = document.getElementById('ttsIcon');
-            icon.setAttribute('data-lucide', window.state.isTTSActive ? 'volume-2' : 'volume-x');
-            document.getElementById('ttsToggle').classList.toggle('bg-indigo-500/20', window.state.isTTSActive);
-            lucide.createIcons();
-        };
-
-        window.speak = (text) => {
-            speechSynthesis.cancel();
-            const cleanText = text.replace(/```[\s\S]*?```/g, 'Blok kódu.').replace(/<[^>]*>/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanText.substring(0, 1000));
-            utterance.voice = speechSynthesis.getVoices().find(v => v.name === document.getElementById('voiceSelect').value) || null;
-            speechSynthesis.speak(utterance);
-        };
-
-        window.toggleSpeech = () => {
-            if(!recognition) return window.showToast("Hlasová biometria nie je podporovaná.");
-            if(window.state.isRecording) {
-                recognition.stop();
-                window.state.isRecording = false;
-                document.getElementById('micIcon').classList.remove('text-rose-500', 'animate-pulse');
-            } else {
-                recognition.start();
-                window.state.isRecording = true;
-                document.getElementById('micIcon').classList.add('text-rose-500', 'animate-pulse');
-            }
-        };
-
-        document.getElementById('fileInput').addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            for(let file of files) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const base64 = ev.target.result.split(',')[1];
-                    window.state.attachments.push({ id: Date.now() + Math.random(), mime: file.type, base64, name: file.name });
-                    window.renderAttachments();
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        window.renderAttachments = () => {
-            const container = document.getElementById('filePreview');
-            if(window.state.attachments.length > 0) {
-                container.classList.remove('hidden');
-                container.innerHTML = window.state.attachments.map(a => `
-                    <div class="bg-slate-900 border border-white/10 p-2 rounded-2xl flex items-center gap-3 glass animate-in zoom-in-90 shadow-xl">
-                        ${a.mime.startsWith('image/') ? `<img src="data:${a.mime};base64,${a.base64}" class="w-10 h-10 rounded-xl object-cover">` : `<i data-lucide="video" class="w-5 h-5 text-indigo-400"></i>`}
-                        <button onclick="removeAttachment(${a.id})" class="text-rose-500 hover:text-rose-400 font-bold px-2">×</button>
-                    </div>
-                `).join('');
-                lucide.createIcons();
-            } else { container.classList.add('hidden'); }
-        };
-
-        window.removeAttachment = (id) => {
-            window.state.attachments = window.state.attachments.filter(a => a.id !== id);
-            window.renderAttachments();
-        };
-
+        // --- UI FUNCTIONS ---
         window.appendMessageUI = (msg) => {
             const container = document.getElementById('chatContainer');
             const div = document.createElement('div');
@@ -435,15 +292,188 @@
             container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         };
 
-        window.showToast = (text) => {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-32 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/50 px-8 py-4 rounded-[2rem] shadow-2xl z-50 animate-in slide-in-from-bottom-5 glass';
-            toast.innerHTML = `<p class="text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-3"><i data-lucide="info" class="w-4 h-4"></i> ${text}</p>`;
-            document.body.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => toast.remove(), 4000);
+        // --- AI LOGIC ---
+        async function fetchWithRetry(url, options, retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return await res.json();
+                    if (res.status === 429) { /* Rate limit */ }
+                    else if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+                } catch (err) { if (i === retries - 1) throw err; }
+                await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+            }
+        }
+
+        window.callEMI = async (prompt, media) => {
+            window.state.isThinking = true;
+            const thinkingDiv = document.getElementById('thinkingOverlay');
+            thinkingDiv.classList.remove('hidden');
+            const status = document.getElementById('thinkingStatus');
+            const phases = ["Kvantová analýza...", "Hĺbkové uvažovanie...", "Syntéza vedomostí...", "Kryštalizácia pravdy..."];
+            let pIdx = 0;
+            const interval = setInterval(() => { status.innerText = phases[pIdx % phases.length]; pIdx++; }, 2500);
+
+            try {
+                const parts = [{ text: prompt || "Analyzuj vstupy." }];
+                media.forEach(m => parts.push({ inlineData: { mimeType: m.mime, data: m.base64 } }));
+
+                const system = `Si EMI, AI s hlbokým uvažovaním. 
+                1. Každú odpoveď ZAČNI blokom <reasoning> (aspoň 4 odstavce analýzy).
+                2. Buď multimodálna (pozri si obrázky/videá).
+                3. Vždy hovor pravdu. Odpovedaj v slovenčine.
+                4. Ak vidíš video, analyzuj ho podrobne.`;
+
+                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${window.state.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts }],
+                        systemInstruction: { parts: [{ text: system }] },
+                        tools: [{ google_search: {} }]
+                    })
+                });
+
+                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "EMI neodpovedá.";
+                let thinking = "", content = rawText;
+                const match = rawText.match(/<reasoning>([\s\S]*?)<\/reasoning>/);
+                if (match) {
+                    thinking = match[1].trim();
+                    content = rawText.replace(/<reasoning>[\s\S]*?<\/reasoning>/, "").trim();
+                }
+
+                const sources = data.candidates?.[0]?.groundingMetadata?.groundingAttributions?.map(a => ({
+                    uri: a.web?.uri, title: a.web?.title
+                })) || [];
+
+                const botMsg = { role: 'assistant', content, thinking, sources, timestamp: Date.now() };
+                saveToDB(botMsg);
+                window.appendMessageUI(botMsg);
+
+                if(window.state.isTTSActive) window.speak(content);
+
+            } catch (err) {
+                window.showToast("CHYBA JADRA: AI nereaguje. Skontrolujte kľúč.");
+                console.error(err);
+            } finally {
+                clearInterval(interval);
+                window.state.isThinking = false;
+                thinkingDiv.classList.add('hidden');
+            }
         };
 
+        // --- HANDLERS ---
+        window.handleSend = async () => {
+            const input = document.getElementById('userInput');
+            const prompt = input.value.trim();
+            if ((!prompt && window.state.attachments.length === 0) || window.state.isThinking) return;
+
+            if(!window.state.apiKey) {
+                window.showToast("Prosím, vložte API kľúč v nastaveniach.");
+                return window.toggleSettings();
+            }
+
+            const userMsg = { role: 'user', content: prompt, media: [...window.state.attachments], timestamp: Date.now() };
+            saveToDB(userMsg);
+            window.appendMessageUI(userMsg);
+            document.getElementById('empty-state').classList.add('hidden');
+
+            const mediaToSend = [...window.state.attachments];
+            input.value = '';
+            input.style.height = 'auto';
+            window.state.attachments = [];
+            window.renderAttachments();
+            
+            await window.callEMI(prompt, mediaToSend);
+        };
+
+        window.toggleSettings = () => {
+            const modal = document.getElementById('settingsModal');
+            modal.classList.toggle('hidden');
+            document.getElementById('apiKeyInput').value = window.state.apiKey;
+            window.loadVoices(); // Call correctly from window
+        };
+
+        window.saveSettings = () => {
+            window.state.apiKey = document.getElementById('apiKeyInput').value;
+            localStorage.setItem('emi_key', window.state.apiKey);
+            window.toggleSettings();
+            window.showToast("Konfigurácia jadra uložená.");
+        };
+
+        window.toggleTTS = () => {
+            window.state.isTTSActive = !window.state.isTTSActive;
+            localStorage.setItem('emi_tts', window.state.isTTSActive);
+            const icon = document.getElementById('ttsIcon');
+            icon.setAttribute('data-lucide', window.state.isTTSActive ? 'volume-2' : 'volume-x');
+            document.getElementById('ttsToggle').classList.toggle('bg-indigo-500/20', window.state.isTTSActive);
+            lucide.createIcons();
+        };
+
+        window.speak = (text) => {
+            speechSynthesis.cancel();
+            const cleanText = text.replace(/```[\s\S]*?```/g, 'Blok kódu preskočený.').replace(/<[^>]*>/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText.substring(0, 800));
+            const select = document.getElementById('voiceSelect');
+            if (select) {
+                utterance.voice = speechSynthesis.getVoices().find(v => v.name === select.value) || null;
+            }
+            speechSynthesis.speak(utterance);
+        };
+
+        window.toggleSpeech = () => {
+            if(!recognition) return window.showToast("Hlasová biometria nie je podporovaná.");
+            if(window.state.isRecording) {
+                recognition.stop();
+                window.state.isRecording = false;
+                document.getElementById('micIcon').classList.remove('text-rose-500', 'animate-pulse');
+            } else {
+                recognition.start();
+                window.state.isRecording = true;
+                document.getElementById('micIcon').classList.add('text-rose-500', 'animate-pulse');
+            }
+        };
+
+        // --- FILE HANDLING ---
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            for(let file of files) {
+                if (file.size > 15 * 1024 * 1024) {
+                    window.showToast("Súbor je príliš veľký (max 15MB).");
+                    continue;
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const base64 = ev.target.result.split(',')[1];
+                    window.state.attachments.push({ id: Date.now() + Math.random(), mime: file.type, base64, name: file.name });
+                    window.renderAttachments();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        window.renderAttachments = () => {
+            const container = document.getElementById('filePreview');
+            if(window.state.attachments.length > 0) {
+                container.classList.remove('hidden');
+                container.innerHTML = window.state.attachments.map(a => `
+                    <div class="bg-slate-900 border border-white/10 p-2 rounded-2xl flex items-center gap-3 glass animate-in zoom-in-90 shadow-xl">
+                        ${a.mime.startsWith('image/') ? `<img src="data:${a.mime};base64,${a.base64}" class="w-10 h-10 rounded-xl object-cover">` : `<i data-lucide="video" class="w-5 h-5 text-indigo-400"></i>`}
+                        <button onclick="removeAttachment(${a.id})" class="text-rose-500 hover:text-rose-400 font-bold px-2">×</button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } else { container.classList.add('hidden'); }
+        };
+
+        window.removeAttachment = (id) => {
+            window.state.attachments = window.state.attachments.filter(a => a.id !== id);
+            window.renderAttachments();
+        };
+
+        // Final Init
+        lucide.createIcons();
+        marked.setOptions({ highlight: (code) => hljs.highlightAuto(code).value, breaks: true });
         const area = document.getElementById('userInput');
         area.addEventListener('input', () => { area.style.height = 'auto'; area.style.height = area.scrollHeight + 'px'; });
 
